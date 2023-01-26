@@ -21,8 +21,18 @@ import StatisticsCard from 'src/views/dashboard/StatisticsCard'
 import WeeklyOverview from 'src/views/dashboard/WeeklyOverview'
 import DepositWithdraw from 'src/views/dashboard/DepositWithdraw'
 import SalesByCountries from 'src/views/dashboard/SalesByCountries'
+import { useContext } from 'react'
+import AppContext from 'src/app-context'
+import { GetState, GetTwitterAuthClient } from 'src/@core/utils/twitter-auth-utils'
+import { Client } from 'twitter-api-sdk'
 
-const Dashboard = () => {
+const Dashboard = (props: any) => {
+
+  const appContext = useContext(AppContext);
+
+  console.log("===== props are: ", props);
+  console.log("===== appContext is: ", appContext);
+
   return (
     <ApexChartWrapper>
       <Grid container spacing={6}>
@@ -96,6 +106,73 @@ const Dashboard = () => {
       </Grid>
     </ApexChartWrapper>
   )
+}
+
+export async function getServerSideProps(context: any) {
+  const authClient = GetTwitterAuthClient();
+  const STATE = GetState();
+  if (context.query != null) {
+    const state = context.query.state;
+    if (state != STATE) {
+      console.error("State is not matching.. Failing..");
+      return {
+        props: {
+          success: false,
+          error: "State is not matching. Please try authenticating again",
+        }
+      }
+    }
+    const err = context.query.error;
+    if (err != null) {
+      console.error("Error authenticating with Twitter. Err: " + err);
+      return {
+        props: {
+          success: false,
+          error: "Error authenticating with Twitter. Err: " + err,
+        }
+      }
+    }
+
+    const authUrl = authClient.generateAuthURL({
+      state: STATE,
+      code_challenge: "challenge",
+      code_challenge_method: "plain",
+    });
+    const code = context.query.code;
+    //Gets access token and pass back to the dashboard page
+    try {
+      await authClient.requestAccessToken(code);
+      const client = new Client(authClient);
+      const myuser = await client.users.findMyUser();
+      console.log("======= my user is: ", myuser);
+      const mybookmarks = await client.bookmarks.getUsersIdBookmarks("108667883")
+      console.log("======= my bookmarks are: ", mybookmarks);
+      return {
+        props: {
+          success: true,
+          error: null,
+          bookmarks: mybookmarks,
+        }
+      }
+    } catch (error) {
+      console.error("========= major error...", error);
+      return {
+        props: {
+          success: false,
+          error: "Major Error!",
+        }
+      }
+    }
+
+  }
+
+  return {
+    props: {
+      success: false,
+      accessToken: null,
+      error: "No Response from Twitter API. Please contact support",
+    }
+  }
 }
 
 export default Dashboard

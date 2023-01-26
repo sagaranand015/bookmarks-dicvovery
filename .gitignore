@@ -12,3 +12,5 @@ frontend/out/
 
 # production
 frontend/build
+
+frontend/.env*
