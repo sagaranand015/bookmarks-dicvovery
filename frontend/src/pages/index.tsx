@@ -1,144 +1,113 @@
-// ** React Imports
-import { ChangeEvent, MouseEvent, ReactNode, useContext, useState } from 'react'
-
-// ** Next Imports
-import Link from 'next/link'
-import { useRouter } from 'next/router'
-
-// ** MUI Components
-import Box from '@mui/material/Box'
-import Button from '@mui/material/Button'
-import Divider from '@mui/material/Divider'
-import Typography from '@mui/material/Typography'
-import IconButton from '@mui/material/IconButton'
-import CardContent from '@mui/material/CardContent'
-import { styled, useTheme } from '@mui/material/styles'
-import MuiCard, { CardProps } from '@mui/material/Card'
-import MuiFormControlLabel, { FormControlLabelProps } from '@mui/material/FormControlLabel'
+// ** MUI Imports
+import Grid from '@mui/material/Grid'
 
 // ** Icons Imports
-import Twitter from 'mdi-material-ui/Twitter'
+import Poll from 'mdi-material-ui/Poll'
+import CurrencyUsd from 'mdi-material-ui/CurrencyUsd'
+import HelpCircleOutline from 'mdi-material-ui/HelpCircleOutline'
+import BriefcaseVariantOutline from 'mdi-material-ui/BriefcaseVariantOutline'
 
-// ** Configs
-import themeConfig from 'src/configs/themeConfig'
+// ** Custom Components Imports
+import CardStatisticsVerticalComponent from 'src/@core/components/card-statistics/card-stats-vertical'
 
-// ** Layout Import
-import BlankLayout from 'src/@core/layouts/BlankLayout'
+// ** Styled Component Import
+import ApexChartWrapper from 'src/@core/styles/libs/react-apexcharts'
 
-// ** Demo Imports
-import FooterIllustrationsV1 from 'src/views/pages/auth/FooterIllustration'
-import { GetState, GetTwitterAuthClient, SetTwitterAuthClient } from 'src/@core/utils/twitter-auth-utils'
-import AppContext from 'src/app-context'
+// ** Demo Components Imports
+import Table from 'src/views/dashboard/Table'
+import Trophy from 'src/views/dashboard/Trophy'
+import TotalEarning from 'src/views/dashboard/TotalEarning'
+import StatisticsCard from 'src/views/dashboard/StatisticsCard'
+import WeeklyOverview from 'src/views/dashboard/WeeklyOverview'
+import DepositWithdraw from 'src/views/dashboard/DepositWithdraw'
+import SalesByCountries from 'src/views/dashboard/SalesByCountries'
 
-// ** Styled Components
-const Card = styled(MuiCard)<CardProps>(({ theme }) => ({
-  [theme.breakpoints.up('sm')]: { width: '28rem' }
-}));
+import { GetState, GetTwitterAuthClient } from 'src/@core/utils/twitter-auth-utils'
+import { Client } from 'twitter-api-sdk'
+import { useContext, useState } from 'react'
+import TwitterAuthContext from 'src/@core/context/twitterAuthContext'
 
-const LinkStyled = styled('a')(({ theme }) => ({
-  fontSize: '0.875rem',
-  textDecoration: 'none',
-  color: theme.palette.primary.main
-}));
+const Dashboard = (props: any) => {
 
-const LoginPage = (props: any) => {
-  // ** Hook
-  const theme = useTheme()
-  const router = useRouter()
+  const twitterAuthContext = useContext(TwitterAuthContext);
+  const [twitterAuthCode, setTwitterAuthCode] = useState<string | null>(null);
+  const [twitterAuthToken, setTwitterAuthToken] = useState<string | null>(null);
+  const [twitterUserId, setTwitterUserId] = useState<any | null>(null);
 
-  // initiate the login by redirecting to the authUrl
-  async function initiateTwitterLogin() {
-    if (props != null && props.authUrl != null) {
-      window.open(props.authUrl, "_blank");
-    }
-  }
+  console.log("===== props are: ", props);
 
   return (
-    <Box className='content-center'>
-      <Card sx={{ zIndex: 1 }}>
-        <CardContent sx={{ padding: theme => `${theme.spacing(12, 9, 7)} !important` }}>
-          <Box sx={{ mb: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Typography
-              variant='h6'
-              sx={{
-                ml: 3,
-                lineHeight: 1,
-                fontWeight: 600,
-                textTransform: 'uppercase',
-                fontSize: '1.5rem !important'
-              }}
-            >
-              {themeConfig.templateName}
-            </Typography>
-          </Box>
-          <Box sx={{ mb: 6 }}>
-            <Typography variant='h5' sx={{ fontWeight: 600, marginBottom: 1.5 }}>
-              Welcome to {themeConfig.templateName}! 👋🏻
-            </Typography>
-            <Typography variant='body2'>Please sign-in via Twitter to see your awesome data insights!</Typography>
-          </Box>
-          <form noValidate autoComplete='off' onSubmit={e => e.preventDefault()}>
-            <Button
-              fullWidth
-              size='large'
-              variant='contained'
-              sx={{ marginBottom: 7 }}
-              onClick={initiateTwitterLogin}
-            >
-              <IconButton component='a' onClick={(e: MouseEvent<HTMLElement>) => e.preventDefault()}>
-                <Twitter sx={{ color: '#1da1f2' }} />
-              </IconButton>
-              Login via Twitter
-            </Button>
-            <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center' }}>
-              <Typography variant='body2' sx={{ marginRight: 2 }}>
-                New on our platform?
-              </Typography>
-              <Typography variant='body2'>
-                <Link passHref href='/pages/register'>
-                  <LinkStyled>See How It Works</LinkStyled>
-                </Link>
-              </Typography>
-            </Box>
-            <Divider sx={{ my: 5 }}></Divider>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-
-              <Typography variant='body2' sx={{ marginRight: 2 }}>
-                More Integrations Coming Soon!
-              </Typography>
-              <Typography variant='body2'>
-                <Link passHref href='/pages/register'>
-                  <LinkStyled>See our Roadmap</LinkStyled>
-                </Link>
-              </Typography>
-            </Box>
-          </form>
-        </CardContent>
-      </Card>
-      <FooterIllustrationsV1 />
-    </Box>
+    (twitterUserId && twitterAuthCode) ? <div>Logged in!</div> : <div>Not Logged in!</div>
   )
 }
 
-LoginPage.getLayout = (page: ReactNode) => <BlankLayout>{page}</BlankLayout>
-
 export async function getServerSideProps(context: any) {
-  /**
-   * Get the Twitter authClient from the server and give it to the Login Page via server props
-   */
+
+  console.log("====== context on server is: ", context);
+
   const authClient = GetTwitterAuthClient();
   const STATE = GetState();
-  // Get authorization
-  const authUrl = authClient.generateAuthURL({
-    state: STATE,
-    code_challenge: "challenge",
-    code_challenge_method: "plain",
-  });
-  SetTwitterAuthClient(authClient);
-  console.log("authUrl on server is: ", authUrl);
+  if (context.query != null) {
+    const state = context.query.state;
+    if (state != STATE) {
+      console.error("State is not matching.. Failing..");
+      return {
+        props: {
+          success: false,
+          error: "State is not matching. Please try authenticating again",
+        }
+      }
+    }
+    const err = context.query.error;
+    if (err != null) {
+      console.error("Error authenticating with Twitter. Err: " + err);
+      return {
+        props: {
+          success: false,
+          error: "Error authenticating with Twitter. Err: " + err,
+        }
+      }
+    }
+
+    const authUrl = authClient.generateAuthURL({
+      state: STATE,
+      code_challenge: "challenge",
+      code_challenge_method: "plain",
+    });
+    const code = context.query.code;
+    //Gets access token and pass back to the dashboard page
+    try {
+      await authClient.requestAccessToken(code);
+      const client = new Client(authClient);
+      const myuser = await client.users.findMyUser();
+      const mybookmarks = await client.bookmarks.getUsersIdBookmarks("108667883")
+      return {
+        props: {
+          success: true,
+          error: null,
+          bookmarks: mybookmarks,
+          user: myuser,
+        }
+      }
+    } catch (error) {
+      console.error("========= major error...", error);
+      return {
+        props: {
+          success: false,
+          error: "Major Error!",
+        }
+      }
+    }
+
+  }
+
   return {
-    props: { authUrl: authUrl }, // will be passed to the page component as props
+    props: {
+      success: false,
+      accessToken: null,
+      error: "No Response from Twitter API. Please contact support",
+    }
   }
 }
 
-export default LoginPage
+export default Dashboard

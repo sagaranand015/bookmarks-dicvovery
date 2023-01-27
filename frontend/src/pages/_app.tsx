@@ -29,7 +29,7 @@ import 'react-perfect-scrollbar/dist/css/styles.css'
 
 // ** Global css styles
 import '../../styles/globals.css'
-import AppContext from 'src/app-context'
+import TwitterAuthContext from 'src/@core/context/twitterAuthContext'
 
 // ** Extend App Props with Emotion
 type ExtendedAppProps = AppProps & {
@@ -60,8 +60,11 @@ const App = (props: ExtendedAppProps) => {
   const getLayout = Component.getLayout ?? (page => <UserLayout>{page}</UserLayout>)
 
   return (
-    <AppContext.Provider value={{
-      twitterAuthClient: null
+    <TwitterAuthContext.Provider value={{
+      twitterAuthClient: null,
+      code: null,
+      token: null,
+      userId: null
     }}>
       <CacheProvider value={emotionCache}>
         <Head>
@@ -82,7 +85,7 @@ const App = (props: ExtendedAppProps) => {
           </SettingsConsumer>
         </SettingsProvider>
       </CacheProvider>
-    </AppContext.Provider>
+    </TwitterAuthContext.Provider>
   )
 }
 
